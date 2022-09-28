@@ -22,16 +22,43 @@ public:
     bool is_enter;
     bool is_intr{false};
     index_t next_src, next_win;
-    IntrPoint(QPoint p, bool enter, bool intr, index_t nsrc, index_t nwin) : QPoint(p) {
+    IntrPoint(const QPoint& p, bool enter, bool intr, index_t nsrc, index_t nwin) : QPoint(p) {
         is_enter = enter;
         is_intr = intr;
         next_src = nsrc;
         next_win = nwin;
     }
 };
-
 using intrs_t = std::vector<IntrPoint>;
 
+
+enum class PointType {
+    Out,
+    In,
+    Vert,
+    Unknown
+};
+
+/**
+ * @brief 用于WA算法中存储顶点和交点
+ */
+class MixPoint : public QPoint {
+public:
+    PointType e_type;
+    int ind_other;
+    MixPoint(const QPoint& p, PointType type, int ind) : QPoint(p) {
+        e_type = type;
+        ind_other = ind;
+    }
+    MixPoint(const IntrPoint& intr) : QPoint(intr) {
+        e_type = PointType::Unknown;
+        ind_other = -1;
+    }
+    bool same_as(const MixPoint& other) {
+        return x() == other.x() && y() == other.y();
+    }
+};
+using mixpts_t = std::vector<MixPoint>;
 
 /**
  * @brief 使用射线法判断点是否在多边形内
@@ -83,7 +110,7 @@ intrs_t polys_interset(const polys_t& src, const polys_t& win);
  * @param intrs 主多边形和裁剪多边形的交点列表
  * @return
  */
-intrs_t intr_list(const polys_t& polys, bool is_src, const intrs_t& intrs);
+mixpts_t intr_list(const polys_t& polys, bool is_src, const intrs_t& intrs);
 
 /**
  * @brief 设置求得的顶点表中的交点出入位
@@ -91,8 +118,15 @@ intrs_t intr_list(const polys_t& polys, bool is_src, const intrs_t& intrs);
  * @param lisrc 主多边形顶点表
  * @param liwin 裁剪多边形顶点表
  */
-void set_enter_flag(const polys_t& win, intrs_t& lisrc, intrs_t& liwin);
+void set_enter_flag(const polys_t& win, mixpts_t& lisrc, mixpts_t& liwin);
 
-intrs_t weiler_atherton(polys_t& win, polys_t& src);
+/**
+ * @brief 在两个已经列表间标记交点在对方列表中的下标
+ * @param lisrc
+ * @param liwin
+ */
+void link(mixpts_t& lisrc, mixpts_t& liwin);
+
+mixpts_t weiler_atherton(polys_t& win, polys_t& src);
 
 #endif // POLYGON_H

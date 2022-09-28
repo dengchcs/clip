@@ -84,6 +84,17 @@ private slots:
         auto liwin = intr_list(win, false, intrs);
         qDebug() << lisrc << liwin;
     }
+
+    void testLink() {
+        polys_t win = {{{0, 0}, {0, 4}, {4, 4}, {4, 0}}};
+        polys_t src = {{{2,-2}, {2, 2}, {6, 2}, {6,-2}}};
+        const auto intrs = polys_interset(src, win);
+        auto lisrc = intr_list(src, true, intrs);
+        auto liwin = intr_list(win, false, intrs);
+        set_enter_flag(win, lisrc, liwin);
+        link(lisrc, liwin);
+        qDebug() << "wait!";
+    }
 };
 
 #endif // ALGOTEST_H

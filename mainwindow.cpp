@@ -105,15 +105,15 @@ void MainWindow::paintEvent(QPaintEvent*) {
     pen.setWidth(8);
     set_color(int_color);
     for (auto &&p : intrpt) {
-        if (p.is_intr) {
+        if (p.e_type != PointType::Vert) {
             painter.drawPoint(p);
         }
     }
     pen.setWidth(2);
     set_color(int_color);
     for (auto &&p : intrpt) {
-        if (! p.is_intr) continue;
+        if (p.e_type == PointType::Vert) continue;
         QRect rect(p.x(), p.y(), 100, 20);
-        painter.drawText(rect, p.is_enter ? "IN" : "OUT");
+        painter.drawText(rect, p.e_type == PointType::In ? "IN" : "OUT");
     }
 }
