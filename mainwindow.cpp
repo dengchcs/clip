@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
         msg->exec();
     });
     connect(ui->doIntrBtn, &QPushButton::clicked, this, [&](){
-        intrpt = polys_interset(source, window);
+        intrpt = weiler_atherton(window, source);
         update();
         auto msg = new QMessageBox(this);
         msg->setText("已绘制裁剪多边形");
@@ -102,16 +102,18 @@ void MainWindow::paintEvent(QPaintEvent*) {
     set_color(e_poly == PolyType::Source ? src_color : win_color);
     draw_poly(buf_points, false);
 
-    pen.setColor(int_color);
     pen.setWidth(8);
-    painter.setPen(pen);
+    set_color(int_color);
     for (auto &&p : intrpt) {
-        painter.drawPoint(p);
+        if (p.is_intr) {
+            painter.drawPoint(p);
+        }
     }
     pen.setWidth(2);
     set_color(int_color);
     for (auto &&p : intrpt) {
+        if (! p.is_intr) continue;
         QRect rect(p.x(), p.y(), 100, 20);
-        painter.drawText(rect, "(" + QString::number(p.x()) + "," + QString::number(p.y()) + ")");
+        painter.drawText(rect, p.is_enter ? "IN" : "OUT");
     }
 }

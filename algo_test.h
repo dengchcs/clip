@@ -17,6 +17,9 @@ private slots:
         points_t poly = {{0, 0}, {0, 2}, {2, 2}, {1, 0}};
         QVERIFY(inside({1, 1}, poly));
         QVERIFY(!inside({2,0}, poly));
+        poly = {{0, 0}, {1, 0}, {2, 2}, {0, 2}};
+        QVERIFY(inside({1, 1}, poly));
+        QVERIFY(! inside({2, 0}, poly));
     }
 
     void testIsClockwise() {
@@ -62,6 +65,24 @@ private slots:
         auto intrs = polys_interset(src, win);
         // 应为 {(2,0), (2,1), (3,2), (4,2)}
         qDebug() << intrs;
+    }
+
+    void testIntrList() {
+        polys_t win = {{{0, 0}, {0, 4}, {4, 4}, {4, 0}}};
+        polys_t src = {{{2,-2}, {2, 2}, {6, 2}, {6,-2}}};
+        auto intrs = polys_interset(src, win);
+        auto lisrc = intr_list(src, true, intrs);
+        auto liwin = intr_list(win, false, intrs);
+        qDebug() << lisrc << liwin;
+    }
+
+    void testIntrListWithInnerLoop() {
+        polys_t win = {{{0, 0}, {0, 4}, {4, 4}, {4, 0}}, {{1,1}, {1,3}, {3,3}, {3,1}}};
+        polys_t src = {{{2,-2}, {2, 2}, {6, 2}, {6,-2}}};
+        auto intrs = polys_interset(src, win);
+        auto lisrc = intr_list(src, true, intrs);
+        auto liwin = intr_list(win, false, intrs);
+        qDebug() << lisrc << liwin;
     }
 };
 

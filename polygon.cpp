@@ -14,6 +14,18 @@ bool inside(const QPoint& point, const points_t& poly) {
     return (cnt % 2) == 1;
 }
 
+bool inside(const QPoint& point, const polys_t& polys) {
+    if (! inside(point, polys[0])) {
+        return false;
+    }
+    for (std::size_t i = 1; i < polys.size(); i++) {
+        if (inside(point, polys[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool is_clockwise(const points_t& poly) {
     if (poly.size() < 3) {
         return false;
@@ -83,11 +95,73 @@ intrs_t polys_interset(const polys_t& src, const polys_t& win) {
                     const index_t next_src = {(int)i, (int)knext};
                     const index_t next_win = {(int)j, (int)mnext};
                     // todo: 判断是否为入点
-                    IntrPoint intr(point.value(), false, next_src, next_win);
+                    IntrPoint intr(point.value(), false, true, next_src, next_win);
                     result.push_back(intr);
                 }
             }
         }
     }
     return result;
+}
+
+intrs_t intr_list(const polys_t& polys, bool is_src, const intrs_t& intrs) {
+    intrs_t result;
+    const auto nloop = polys.size();
+    for (std::size_t i = 0; i < nloop; i++) {
+        const auto nvert = polys[i].size();
+        for (std::size_t j = 0; j < nvert; j++) {
+            const auto jnext = (j + 1) % nvert;
+            const auto p1 = polys[i][j];
+            IntrPoint vert{p1, false, false, null_ind, null_ind};
+            result.push_back(vert);
+            intrs_t online;
+            for (auto&& p : intrs) {
+                bool on_src = is_src && p.next_src.loop == (int)i && p.next_src.vert == (int)jnext;
+                bool on_win = !is_src && p.next_win.loop == (int)i && p.next_win.vert == (int)jnext;
+                if (!(on_src || on_win)) continue;
+                online.push_back(p);
+            }
+            std::sort(online.begin(), online.end(), [&](const QPoint& int1, const QPoint& int2){
+                return (int1 - p1).manhattanLength() < (int2 - p1).manhattanLength();
+            });
+            for (auto&& p : online) {
+                result.push_back(p);
+            }
+        }
+        IntrPoint vert{polys[i].front(), false, false, null_ind, null_ind};
+        result.push_back(vert);
+    }
+    return result;
+}
+
+void set_enter_flag(const polys_t& win, intrs_t& lisrc, intrs_t& liwin) {
+    bool flag = false;  // 第一个点肯定是非交点, 所以这里的初值无所谓
+    for (std::size_t i = 0; i < lisrc.size(); i++) {
+        if (! lisrc[i].is_intr) {
+            flag = inside(lisrc[i], win);
+        } else {
+            flag = !flag;
+            lisrc[i].is_enter = flag;
+        }
+    }
+
+    for (std::size_t i = 0; i < liwin.size(); i++) {
+        if (! liwin[i].is_intr) continue;
+        for (std::size_t j = 0; j < lisrc.size(); j++) {
+            if (lisrc[j].x() == liwin[i].x() && lisrc[j].y() == liwin[i].y()) {
+                liwin[i].is_enter = lisrc[j].is_enter;
+                break;
+            }
+        }
+    }
+}
+
+intrs_t weiler_atherton(polys_t& win, polys_t& src) {
+    sort_poly(win);
+    sort_poly(src);
+    const auto intrs = polys_interset(src, win);
+    auto lisrc = intr_list(src, true, intrs);
+    auto liwin = intr_list(win, false, intrs);
+    set_enter_flag(win, lisrc, liwin);
+    return lisrc;   // todo
 }

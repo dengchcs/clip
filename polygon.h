@@ -15,12 +15,16 @@ typedef struct {
     int vert;
 } index_t;
 
+constexpr index_t null_ind = {-1,-1};
+
 class IntrPoint : public QPoint {
 public:
     bool is_enter;
+    bool is_intr{false};
     index_t next_src, next_win;
-    IntrPoint(QPoint p, bool enter, index_t nsrc, index_t nwin) : QPoint(p) {
+    IntrPoint(QPoint p, bool enter, bool intr, index_t nsrc, index_t nwin) : QPoint(p) {
         is_enter = enter;
+        is_intr = intr;
         next_src = nsrc;
         next_win = nwin;
     }
@@ -33,6 +37,8 @@ using intrs_t = std::vector<IntrPoint>;
  * @brief 使用射线法判断点是否在多边形内
  */
 bool inside(const QPoint& point, const points_t& poly);
+
+bool inside(const QPoint& point, const polys_t& polys);
 
 bool is_clockwise(const points_t& poly);
 
@@ -69,5 +75,24 @@ std::optional<QPoint> line_intr(const QPoint& p1, const QPoint& p2, const QPoint
  * @return
  */
 intrs_t polys_interset(const polys_t& src, const polys_t& win);
+
+/**
+ * @brief 将交点和多边形顶点按序排列,生成列表
+ * @param polys 主/裁剪多边形
+ * @param is_src 是否是主多边形
+ * @param intrs 主多边形和裁剪多边形的交点列表
+ * @return
+ */
+intrs_t intr_list(const polys_t& polys, bool is_src, const intrs_t& intrs);
+
+/**
+ * @brief 设置求得的顶点表中的交点出入位
+ * @param win 裁剪多边形
+ * @param lisrc 主多边形顶点表
+ * @param liwin 裁剪多边形顶点表
+ */
+void set_enter_flag(const polys_t& win, intrs_t& lisrc, intrs_t& liwin);
+
+intrs_t weiler_atherton(polys_t& win, polys_t& src);
 
 #endif // POLYGON_H
