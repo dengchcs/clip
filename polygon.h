@@ -2,6 +2,7 @@
 #define POLYGON_H
 
 #include <algorithm>
+#include <optional>
 #include <vector>
 #include <QPoint>
 
@@ -18,12 +19,15 @@ class IntrPoint : public QPoint {
 public:
     bool is_enter;
     index_t next_src, next_win;
-    IntrPoint(bool enter, index_t nsrc, index_t nwin) {
+    IntrPoint(QPoint p, bool enter, index_t nsrc, index_t nwin) : QPoint(p) {
         is_enter = enter;
         next_src = nsrc;
         next_win = nwin;
     }
 };
+
+using intrs_t = std::vector<IntrPoint>;
+
 
 /**
  * @brief 使用射线法判断点是否在多边形内
@@ -44,17 +48,26 @@ void sort_poly(polys_t& polys);
  * @param p2 线段一端点2
  * @param p3 线段二端点1
  * @param p4 线段二端点2
+ * @return -1表示无交点, 否则表示[0,1]间的线段一参数值
  */
-bool has_intr(const QPoint& p1, const QPoint& p2, const QPoint& p3, const QPoint& p4);
+double has_intr(const QPoint& p1, const QPoint& p2, const QPoint& p3, const QPoint& p4);
 
 /**
- * @brief 求交点. 此函数不检查交点的存在性. 不考虑边重合的情况
+ * @brief 求交点. 不考虑边重合的情况
  * @param p1 线段一端点1
  * @param p2 线段一端点2
  * @param p3 线段二端点1
  * @param p4 线段二端点2
- * @return 交点
+ * @return 若线段相交则返回交点,否则返回nullopt
  */
-QPoint get_intr(const QPoint& p1, const QPoint& p2, const QPoint& p3, const QPoint& p4);
+std::optional<QPoint> line_intr(const QPoint& p1, const QPoint& p2, const QPoint& p3, const QPoint& p4);
+
+/**
+ * @brief 求两个多边形的交点
+ * @param src 主多边形
+ * @param win 裁剪多边形
+ * @return
+ */
+intrs_t polys_interset(const polys_t& src, const polys_t& win);
 
 #endif // POLYGON_H

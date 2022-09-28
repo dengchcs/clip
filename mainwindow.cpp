@@ -3,14 +3,43 @@
 
 #include <QMessageBox>
 #include <QPainter>
+#include <QPushButton>
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    connect(ui->swithBtn, &QPushButton::clicked, this, [&](){
+        auto msg = new QMessageBox(this);
+        if (e_poly == PolyType::Source) {
+            e_poly = PolyType::Window;
+            msg->setText("已转换为裁剪多边形输入模式");
+        } else {
+            e_poly = PolyType::Source;
+            msg->setText("已转换为主多边形输入模式");
+        }
+        msg->setStandardButtons(QMessageBox::Ok);
+        msg->exec();
+    });
+    connect(ui->doIntrBtn, &QPushButton::clicked, this, [&](){
+        intrpt = polys_interset(source, window);
+        update();
+        auto msg = new QMessageBox(this);
+        msg->setText("已绘制裁剪多边形");
+        msg->setStandardButtons(QMessageBox::Ok);
+        msg->exec();
+    });
+    connect(ui->clearBtn, &QPushButton::clicked, this, [&]() {
+        source.clear();
+        window.clear();
+        buf_points.clear();
+        intrpt.clear();
+        update();
+    });
     setFixedSize(800, 800);
     e_poly = PolyType::Source;
-    setWindowTitle("左键添加点; 右键闭合环; 双击在多边形/窗口间切换");
+    setWindowTitle("左键添加点; 右键闭合环");
 }
 
 MainWindow::~MainWindow()
@@ -40,20 +69,6 @@ void MainWindow::mousePressEvent(QMouseEvent* event) {
             err_msg->exec();
         }
     }
-}
-
-void MainWindow::mouseDoubleClickEvent(QMouseEvent*) {
-    buf_points.pop_back();  // 双击会触发单击时添加点的功能, 这里undo一下
-    auto msg = new QMessageBox(this);
-    if (e_poly == PolyType::Source) {
-        e_poly = PolyType::Window;
-        msg->setText("已转换为裁剪多边形输入模式");
-    } else {
-        e_poly = PolyType::Source;
-        msg->setText("已转换为主多边形输入模式");
-    }
-    msg->setStandardButtons(QMessageBox::Ok);
-    msg->exec();
 }
 
 void MainWindow::paintEvent(QPaintEvent*) {
@@ -86,4 +101,17 @@ void MainWindow::paintEvent(QPaintEvent*) {
     }
     set_color(e_poly == PolyType::Source ? src_color : win_color);
     draw_poly(buf_points, false);
+
+    pen.setColor(int_color);
+    pen.setWidth(8);
+    painter.setPen(pen);
+    for (auto &&p : intrpt) {
+        painter.drawPoint(p);
+    }
+    pen.setWidth(2);
+    set_color(int_color);
+    for (auto &&p : intrpt) {
+        QRect rect(p.x(), p.y(), 100, 20);
+        painter.drawText(rect, "(" + QString::number(p.x()) + "," + QString::number(p.y()) + ")");
+    }
 }

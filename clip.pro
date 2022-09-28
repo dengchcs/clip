@@ -17,6 +17,7 @@ SOURCES += \
 
 HEADERS += \
     algo_test.h \
+    control.h \
     mainwindow.h \
     polygon.h
 

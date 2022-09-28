@@ -36,6 +36,33 @@ private slots:
             QVERIFY(is_clockwise(polys[i]));
         }
     }
+
+    void testLineIntr() {
+        auto intr1 = line_intr({0,0},{0,2},{-1,1},{1,1});
+        QCOMPARE(intr1.value(), QPoint(0, 1));
+        auto intr2 = line_intr({0,0},{3,3},{-1,2},{3,0});
+        QCOMPARE(intr2.value(), QPoint(1,1));
+        auto intr3 = line_intr({0,0}, {0,1}, {0,2}, {2,2});
+        QCOMPARE(intr3, std::nullopt);
+        auto intr4 = line_intr({6,2}, {6,-2}, {4,0}, {0,0});
+        QCOMPARE(intr4, std::nullopt);
+    }
+
+    void testPolyIntrNoInnerLoop() {
+        polys_t win = {{{0, 0}, {0, 4}, {4, 4}, {4, 0}}};
+        polys_t src = {{{2,-2}, {2, 2}, {6, 2}, {6,-2}}};
+        auto intrs = polys_interset(src, win);
+        // 应该为 {(2,0), (4,2)}
+        qDebug() << intrs;
+    }
+
+    void testPolyIntrWithInnerLoop() {
+        polys_t win = {{{0, 0}, {0, 4}, {4, 4}, {4, 0}}, {{1,1}, {1,3}, {3,3}, {3,1}}};
+        polys_t src = {{{2,-2}, {2, 2}, {6, 2}, {6,-2}}};
+        auto intrs = polys_interset(src, win);
+        // 应为 {(2,0), (2,1), (3,2), (4,2)}
+        qDebug() << intrs;
+    }
 };
 
 #endif // ALGOTEST_H
