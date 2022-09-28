@@ -1,18 +1,18 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "polygon.h"
 
 #include <QMainWindow>
 #include <QMouseEvent>
-#include <vector>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
-enum PolyType {
-    PolySource,
-    PolyWindow
+enum class PolyType {
+    Source,
+    Window
 };
 
 constexpr auto src_color = Qt::red;
@@ -30,8 +30,6 @@ protected:
     void paintEvent(QPaintEvent* event) override;
     void mouseDoubleClickEvent(QMouseEvent* event) override;
 private:
-    using polys_t = std::vector<std::vector<QPoint>>;
-    using points_t = std::vector<QPoint>;
     Ui::MainWindow *ui;
     points_t buf_points;             // 还未闭合的一个环
     polys_t source;    // 已经闭合的主多边形的环

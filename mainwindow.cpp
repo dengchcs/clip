@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     setFixedSize(800, 800);
-    e_poly = PolyType::PolySource;
+    e_poly = PolyType::Source;
     setWindowTitle("左键添加点; 右键闭合环; 双击在多边形/窗口间切换");
 }
 
@@ -25,7 +25,7 @@ void MainWindow::mousePressEvent(QMouseEvent* event) {
         update();
     } else if (button == Qt::RightButton) {
         if (buf_points.size() >= 3) {
-            if (e_poly == PolySource) {
+            if (e_poly == PolyType::Source) {
                 source.push_back(buf_points);
             } else {
                 window.push_back(buf_points);
@@ -45,11 +45,11 @@ void MainWindow::mousePressEvent(QMouseEvent* event) {
 void MainWindow::mouseDoubleClickEvent(QMouseEvent*) {
     buf_points.pop_back();  // 双击会触发单击时添加点的功能, 这里undo一下
     auto msg = new QMessageBox(this);
-    if (e_poly == PolySource) {
-        e_poly = PolyWindow;
+    if (e_poly == PolyType::Source) {
+        e_poly = PolyType::Window;
         msg->setText("已转换为裁剪多边形输入模式");
     } else {
-        e_poly = PolySource;
+        e_poly = PolyType::Source;
         msg->setText("已转换为主多边形输入模式");
     }
     msg->setStandardButtons(QMessageBox::Ok);
@@ -58,6 +58,12 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent*) {
 
 void MainWindow::paintEvent(QPaintEvent*) {
     QPainter painter(this);
+    QPen pen;
+    pen.setWidth(2);
+    auto set_color = [&](const auto color) {
+        pen.setColor(color);
+        painter.setPen(pen);
+    };
     auto draw_poly = [&](const points_t& points, bool close) {
         for (auto &&p : points) {
             QRect rect(p.x(), p.y(), 100, 20);
@@ -70,14 +76,14 @@ void MainWindow::paintEvent(QPaintEvent*) {
             painter.drawLine(points.back(), points.front());
         }
     };
-    painter.setPen(src_color);
+    set_color(src_color);
     for (std::size_t i = 0; i < source.size(); i++) {
         draw_poly(source[i], true);
     }
-    painter.setPen(win_color);
+    set_color(win_color);
     for (std::size_t i = 0; i < window.size(); i++) {
         draw_poly(window[i], true);
     }
-    painter.setPen(e_poly == PolySource ? src_color : win_color);
+    set_color(e_poly == PolyType::Source ? src_color : win_color);
     draw_poly(buf_points, false);
 }
