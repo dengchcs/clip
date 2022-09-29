@@ -54,7 +54,7 @@ public:
         e_type = PointType::Unknown;
         ind_other = -1;
     }
-    bool same_as(const MixPoint& other) {
+    bool same_as(const MixPoint& other) const {
         return x() == other.x() && y() == other.y();
     }
 };
@@ -127,6 +127,6 @@ void set_enter_flag(const polys_t& win, mixpts_t& lisrc, mixpts_t& liwin);
  */
 void link(mixpts_t& lisrc, mixpts_t& liwin);
 
-mixpts_t weiler_atherton(polys_t& win, polys_t& src);
+std::vector<mixpts_t> weiler_atherton(polys_t& win, polys_t& src);
 
 #endif // POLYGON_H

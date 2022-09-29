@@ -1,4 +1,4 @@
-// #define GUI
+#define GUI
 #ifdef GUI
 #include "mainwindow.h"
 #include <QApplication>

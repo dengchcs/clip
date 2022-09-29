@@ -1,5 +1,8 @@
 #include "polygon.h"
 
+#include <stack>
+#include <unordered_set>
+
 bool inside(const QPoint& point, const points_t& poly) {
     int cnt = 0;
     const std::size_t size = poly.size();
@@ -170,7 +173,7 @@ void link(mixpts_t& lisrc, mixpts_t& liwin) {
     }
 }
 
-mixpts_t weiler_atherton(polys_t& win, polys_t& src) {
+std::vector<mixpts_t> weiler_atherton(polys_t& win, polys_t& src) {
     sort_poly(win);
     sort_poly(src);
     const auto intrs = polys_interset(src, win);
@@ -178,5 +181,72 @@ mixpts_t weiler_atherton(polys_t& win, polys_t& src) {
     auto liwin = intr_list(win, false, intrs);
     set_enter_flag(win, lisrc, liwin);
     link(lisrc, liwin);
-    return lisrc;   // todo
+
+    std::unordered_set<std::size_t> unvisitied_src;
+    for (std::size_t i = 0; i < lisrc.size(); i++) {
+        if (lisrc[i].e_type != PointType::Vert) {
+            unvisitied_src.insert(i);
+        }
+    }
+    std::vector<mixpts_t> result;
+    while(! unvisitied_src.empty()) {
+        // 选取一个未处理的交点作为起点
+        const auto index = *unvisitied_src.begin();
+        unvisitied_src.erase(index);
+        auto cur_intr = lisrc[index];   // 从主多边形的某个交点出发
+        std::size_t cur_ind = index;
+        bool cur_src = true;   // 当前这个交点是否是在主多边形表中
+        mixpts_t poly;
+        do {
+            // 交点为入点 ==> 在主多边形表内跟踪
+            // 交点为出点 ==> 在裁剪多边形表内跟踪
+            // 直至跟踪到下一个交点
+            poly.push_back(cur_intr);
+            const mixpts_t& next = cur_intr.e_type == PointType::In ? lisrc : liwin;
+            // 在主多边形上&是入点 || 在裁剪多边形上&是出点 ==> 继续在当前多边形上跟踪
+            // 交点不可能位于顶点表的末尾, 所以不需要担心这里的+1
+            std::size_t nextind = (cur_intr.e_type == PointType::In) == cur_src ? cur_ind + 1 : cur_intr.ind_other + 1;
+            // 跟踪到顶点直接加入, 直至跟踪到又一个交点
+            while (next[nextind].e_type == PointType::Vert) {
+                poly.push_back(next[nextind]);
+                nextind++;
+                if (nextind == next.size()) {
+                    for (std::size_t i = 0; i < next.size(); i++) {
+                        if (next[i].same_as(next.back())) {
+                            nextind = i + 1;
+                            break;
+                        }
+                    }
+                }
+            }
+            cur_src = cur_intr.e_type == PointType::In;
+            cur_intr = next[nextind];
+            cur_ind = nextind;
+            unvisitied_src.erase(cur_src ? cur_ind : cur_intr.ind_other);
+        } while(! cur_intr.same_as(lisrc[index]));
+        result.push_back(poly);
+    }
+    return result;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

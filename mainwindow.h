@@ -34,7 +34,7 @@ private:
     points_t buf_points;             // 还未闭合的一个环
     polys_t source;    // 已经闭合的主多边形的环
     polys_t window;    // 已经闭合的裁剪多边形的环
-    mixpts_t intrpt;
+    std::vector<mixpts_t> intrpoly;
     PolyType e_poly;
 };
 #endif // MAINWINDOW_H

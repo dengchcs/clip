@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
         msg->exec();
     });
     connect(ui->doIntrBtn, &QPushButton::clicked, this, [&](){
-        intrpt = weiler_atherton(window, source);
+        intrpoly = weiler_atherton(window, source);
         update();
         auto msg = new QMessageBox(this);
         msg->setText("已绘制裁剪多边形");
@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
         source.clear();
         window.clear();
         buf_points.clear();
-        intrpt.clear();
+        intrpoly.clear();
         update();
     });
     setFixedSize(800, 800);
@@ -84,7 +84,11 @@ void MainWindow::paintEvent(QPaintEvent*) {
             QRect rect(p.x(), p.y(), 100, 20);
             painter.drawText(rect, "(" + QString::number(p.x()) + "," + QString::number(p.y()) + ")");
         }
-        for (std::size_t i = 0; i + 1< points.size(); i++) {
+        if (points.size() > 0) {
+            QRect rect(points.front().x() - 20, points.front().y(), 100, 20);
+            painter.drawText(rect, "起点");
+        }
+        for (std::size_t i = 0; i + 1 < points.size(); i++) {
             painter.drawLine(points[i], points[i+1]);
         }
         if (close && points.size() >= 3) {
@@ -104,16 +108,18 @@ void MainWindow::paintEvent(QPaintEvent*) {
 
     pen.setWidth(8);
     set_color(int_color);
-    for (auto &&p : intrpt) {
-        if (p.e_type != PointType::Vert) {
-            painter.drawPoint(p);
+    for (auto &&poly : intrpoly) {
+        for (std::size_t i = 0; i < poly.size(); i++) {
+            painter.drawLine(poly[i], poly[(i+1) % poly.size()]);
         }
     }
     pen.setWidth(2);
     set_color(int_color);
-    for (auto &&p : intrpt) {
-        if (p.e_type == PointType::Vert) continue;
-        QRect rect(p.x(), p.y(), 100, 20);
-        painter.drawText(rect, p.e_type == PointType::In ? "IN" : "OUT");
+    for (auto &&poly : intrpoly) {
+        for (auto &&p : poly) {
+            if (p.e_type == PointType::Vert) continue;
+            QRect rect(p.x(), p.y(), 100, 20);
+            painter.drawText(rect, p.e_type == PointType::In ? "IN" : "OUT");
+        }
     }
 }
