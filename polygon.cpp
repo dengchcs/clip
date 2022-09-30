@@ -2,6 +2,7 @@
 
 #include <stack>
 #include <unordered_set>
+#include <map>
 
 bool inside(const QPoint& point, const points_t& poly) {
     int cnt = 0;
@@ -182,6 +183,19 @@ std::vector<mixpts_t> weiler_atherton(polys_t& win, polys_t& src) {
     set_enter_flag(win, lisrc, liwin);
     link(lisrc, liwin);
 
+    std::map<std::size_t, std::size_t> start_src, start_win;    // 环在顶点表中起始/终止点的下标对应关系
+    for (std::size_t i = 0; i < lisrc.size(); ) {
+        const auto start = i;
+        while(! lisrc[++i].same_as(lisrc[start]));
+        start_src.insert({i, start});
+        i++;
+    }
+    for (std::size_t i = 0; i < liwin.size(); ) {
+        const auto start = i;
+        while(! liwin[++i].same_as(liwin[start]));
+        start_win.insert({i, start});
+        i++;
+    }
     std::unordered_set<std::size_t> unvisitied_src;
     for (std::size_t i = 0; i < lisrc.size(); i++) {
         if (lisrc[i].e_type != PointType::Vert) {
@@ -192,61 +206,42 @@ std::vector<mixpts_t> weiler_atherton(polys_t& win, polys_t& src) {
     while(! unvisitied_src.empty()) {
         // 选取一个未处理的交点作为起点
         const auto index = *unvisitied_src.begin();
-        unvisitied_src.erase(index);
         auto cur_intr = lisrc[index];   // 从主多边形的某个交点出发
-        std::size_t cur_ind = index;
-        bool cur_src = true;   // 当前这个交点是否是在主多边形表中
+
+        bool cur_src = cur_intr.e_type == PointType::In;   // 是否在主多边形表中追踪
+        std::size_t cur_ind = cur_src ? index : cur_intr.ind_other; // 在追踪多边形中的下标
+        if (!cur_src) cur_intr.ind_other = index;
         mixpts_t poly;
         do {
             // 交点为入点 ==> 在主多边形表内跟踪
             // 交点为出点 ==> 在裁剪多边形表内跟踪
             // 直至跟踪到下一个交点
+            unvisitied_src.erase(cur_src ? cur_ind : cur_intr.ind_other);
             poly.push_back(cur_intr);
-            const mixpts_t& next = cur_intr.e_type == PointType::In ? lisrc : liwin;
+            const mixpts_t& track = cur_intr.e_type == PointType::In ? lisrc : liwin;
             // 在主多边形上&是入点 || 在裁剪多边形上&是出点 ==> 继续在当前多边形上跟踪
             // 交点不可能位于顶点表的末尾, 所以不需要担心这里的+1
             std::size_t nextind = (cur_intr.e_type == PointType::In) == cur_src ? cur_ind + 1 : cur_intr.ind_other + 1;
             // 跟踪到顶点直接加入, 直至跟踪到又一个交点
-            while (next[nextind].e_type == PointType::Vert) {
-                poly.push_back(next[nextind]);
-                nextind++;
-                if (nextind == next.size()) {
-                    for (std::size_t i = 0; i < next.size(); i++) {
-                        if (next[i].same_as(next.back())) {
-                            nextind = i + 1;
-                            break;
-                        }
-                    }
+            while (track[nextind].e_type == PointType::Vert) {
+                poly.push_back(track[nextind]);
+                if (cur_src && start_src.find(nextind) != start_src.end()) {
+                    nextind = start_src.find(nextind)->second;
+                } else if (!cur_src && start_win.find(nextind) != start_win.end()) {
+                    nextind = start_win.find(nextind)->second;
                 }
+                nextind++;
             }
-            cur_src = cur_intr.e_type == PointType::In;
-            cur_intr = next[nextind];
-            cur_ind = nextind;
-            unvisitied_src.erase(cur_src ? cur_ind : cur_intr.ind_other);
+            if ((track[nextind].e_type == PointType::In) != cur_src) {  // 换一个多边形追踪
+                cur_src = !cur_src;
+                cur_ind = track[nextind].ind_other;
+                cur_intr = cur_intr.e_type == PointType::In ? liwin[cur_ind] : lisrc[cur_ind];
+            } else {
+                cur_ind = nextind;
+                cur_intr = track[nextind];
+            }
         } while(! cur_intr.same_as(lisrc[index]));
         result.push_back(poly);
     }
     return result;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
