@@ -95,6 +95,18 @@ private slots:
         link(lisrc, liwin);
         qDebug() << "wait!";
     }
+
+    void testRingInsidePolygon() {
+        const polys_t poly = {{{0,0}, {0,16}, {8,16}, {8,0}}, {{2,4}, {6,4}, {6,8}, {2,8}}};
+        points_t ring = {{2,10}, {2,12}, {4,12}};
+        QVERIFY(inside(ring, poly));
+        ring = {{3,5}, {3,6}, {5,6}, {5,5}};
+        QVERIFY(! inside(ring, poly));
+        ring = {{3,7}, {3,9}, {5,9}, {5,7}};
+        QVERIFY(! inside(ring, poly));
+        ring = {{-2,-2},{-2,-1},{-1,-1},{-1,-2}};
+        QVERIFY(! inside(ring, poly));
+    }
 };
 
 #endif // ALGOTEST_H

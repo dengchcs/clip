@@ -30,6 +30,14 @@ bool inside(const QPoint& point, const polys_t& polys) {
     return true;
 }
 
+bool inside(const points_t& points, const polys_t& polys) {
+    if (has_intr(points, polys)) return false;
+    for (auto&& p : points) {
+        if (! inside(p, polys)) return false;
+    }
+    return true;
+}
+
 bool is_clockwise(const points_t& poly) {
     if (poly.size() < 3) {
         return false;
@@ -70,6 +78,29 @@ double has_intr(const QPoint& p1, const QPoint& p2, const QPoint& p3, const QPoi
     double u = ufenzi / (fenmu + 0.0);
     if (u < 0 || u > 1) return -1;
     return t;
+}
+
+bool has_intr(const QPoint& p1, const QPoint& p2, const points_t& poly) {
+    const auto np = poly.size();
+    for (std::size_t i = 0; i < np; i++) {
+        if (has_intr(p1, p2, poly[i], poly[(i+1)%np]) >= 0) return true;
+    }
+    return false;
+}
+
+bool has_intr(const points_t& points, const points_t& poly) {
+    const auto npoints = points.size();
+    for (std::size_t i = 0; i < npoints; i++) {
+        if (has_intr(points[i], points[(i+1)%npoints], poly)) return true;
+    }
+    return false;
+}
+
+bool has_intr(const points_t& points, const polys_t& polys) {
+    for (auto&& poly : polys) {
+        if (has_intr(points, poly)) return true;
+    }
+    return false;
 }
 
 std::optional<QPoint> line_intr(const QPoint& p1, const QPoint& p2, const QPoint& p3, const QPoint& p4) {
@@ -243,5 +274,23 @@ std::vector<mixpts_t> weiler_atherton(polys_t& win, polys_t& src) {
         } while(! cur_intr.same_as(lisrc[index]));
         result.push_back(poly);
     }
+
+    // 处理没有交点的环
+    auto check_rings = [&](bool srcring) {
+        const auto& ring_poly = srcring ? src : win;
+        const auto& comp_poly = srcring ? win : src;
+        for (auto&& ring : ring_poly) {
+            if (inside(ring, comp_poly)) {
+                mixpts_t add;
+                for (auto&& p : ring) {
+                    MixPoint mix{p, PointType::Vert, -1};
+                    add.push_back(mix);
+                }
+                result.push_back(add);
+            }
+        }
+    };
+    check_rings(true);
+    check_rings(false);
     return result;
 }

@@ -65,8 +65,19 @@ using mixpts_t = std::vector<MixPoint>;
  */
 bool inside(const QPoint& point, const points_t& poly);
 
+/**
+ * @brief 点是否在多边形内, 要求多边形已排好序
+ */
 bool inside(const QPoint& point, const polys_t& polys);
 
+/**
+ * @brief 环是否在多边形内, 要求多边形已排好序
+ */
+bool inside(const points_t& points, const polys_t& polys);
+
+/**
+ * @brief 环是否是顺时针方向的
+ */
 bool is_clockwise(const points_t& poly);
 
 /**
@@ -84,6 +95,21 @@ void sort_poly(polys_t& polys);
  * @return -1表示无交点, 否则表示[0,1]间的线段一参数值
  */
 double has_intr(const QPoint& p1, const QPoint& p2, const QPoint& p3, const QPoint& p4);
+
+/**
+ * @brief 线和环是否相交
+ */
+bool has_intr(const QPoint& p1, const QPoint& p2, const points_t& poly);
+
+/**
+ * @brief 环和环是否相交
+ */
+bool has_intr(const points_t& points, const points_t& poly);
+
+/**
+ * @brief 环和多边形是否相交
+ */
+bool has_intr(const points_t& points, const polys_t& polys);
 
 /**
  * @brief 求交点. 不考虑边重合的情况
