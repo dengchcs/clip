@@ -12,21 +12,29 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     connect(ui->swithBtn, &QPushButton::clicked, this, [&](){
         auto msg = new QMessageBox(this);
-        if (e_poly == PolyType::Source) {
-            e_poly = PolyType::Window;
-            msg->setText("已转换为裁剪多边形输入模式");
+        if (buf_points.empty()) {
+            if (e_poly == PolyType::Source) {
+                e_poly = PolyType::Window;
+                msg->setText("已转换为裁剪多边形输入模式");
+            } else {
+                e_poly = PolyType::Source;
+                msg->setText("已转换为主多边形输入模式");
+            }
         } else {
-            e_poly = PolyType::Source;
-            msg->setText("已转换为主多边形输入模式");
+            msg->setText("请先闭合多边形");
         }
         msg->setStandardButtons(QMessageBox::Ok);
         msg->exec();
     });
     connect(ui->doIntrBtn, &QPushButton::clicked, this, [&](){
-        intrpoly = weiler_atherton(window, source);
-        update();
         auto msg = new QMessageBox(this);
-        msg->setText("已绘制裁剪多边形");
+        if (buf_points.empty()) {
+            intrpoly = weiler_atherton(window, source);
+            update();
+            msg->setText("已绘制裁剪多边形");
+        } else {
+            msg->setText("请先闭合多边形");
+        }
         msg->setStandardButtons(QMessageBox::Ok);
         msg->exec();
     });
@@ -38,8 +46,9 @@ MainWindow::MainWindow(QWidget *parent)
         update();
     });
     setFixedSize(800, 800);
-    e_poly = PolyType::Source;
+    e_poly = PolyType::Window;
     setWindowTitle("左键添加点; 右键闭合环");
+    ui->colorText->setText("主多边形: 红色; 裁剪多边形: 绿色; 结果: 黑色");
 }
 
 MainWindow::~MainWindow()
@@ -73,10 +82,10 @@ void MainWindow::mousePressEvent(QMouseEvent* event) {
 
 void MainWindow::paintEvent(QPaintEvent*) {
     QPainter painter(this);
-    QPen pen;
-    pen.setWidth(2);
-    auto set_color = [&](const auto color) {
+    auto set_painter = [&](const auto color, int width = 2) {
+        QPen pen;
         pen.setColor(color);
+        pen.setWidth(width);
         painter.setPen(pen);
     };
     auto draw_poly = [&](const points_t& points, bool close) {
@@ -84,37 +93,36 @@ void MainWindow::paintEvent(QPaintEvent*) {
             QRect rect(p.x(), p.y(), 100, 20);
             painter.drawText(rect, "(" + QString::number(p.x()) + "," + QString::number(p.y()) + ")");
         }
-        if (points.size() > 0) {
+        const auto npoints = points.size();
+        if (npoints > 0) {
             QRect rect(points.front().x() - 20, points.front().y(), 100, 20);
             painter.drawText(rect, "起点");
         }
-        for (std::size_t i = 0; i + 1 < points.size(); i++) {
+        for (std::size_t i = 0; i + 1 < npoints; i++) {
             painter.drawLine(points[i], points[i+1]);
         }
-        if (close && points.size() >= 3) {
+        if (close && npoints >= 3) {
             painter.drawLine(points.back(), points.front());
         }
     };
-    set_color(src_color);
-    for (std::size_t i = 0; i < source.size(); i++) {
-        draw_poly(source[i], true);
+    set_painter(src_color);
+    for (auto&& poly : source) {
+        draw_poly(poly, true);
     }
-    set_color(win_color);
-    for (std::size_t i = 0; i < window.size(); i++) {
-        draw_poly(window[i], true);
+    set_painter(win_color);
+    for (auto&& poly : window) {
+        draw_poly(poly, true);
     }
-    set_color(e_poly == PolyType::Source ? src_color : win_color);
+    set_painter(e_poly == PolyType::Source ? src_color : win_color);
     draw_poly(buf_points, false);
 
-    pen.setWidth(8);
-    set_color(int_color);
+    set_painter(int_color, 4);
     for (auto &&poly : intrpoly) {
         for (std::size_t i = 0; i < poly.size(); i++) {
             painter.drawLine(poly[i], poly[(i+1) % poly.size()]);
         }
     }
-    pen.setWidth(2);
-    set_color(int_color);
+    set_painter(int_color, 1);
     for (auto &&poly : intrpoly) {
         for (auto &&p : poly) {
             if (p.e_type == PointType::Vert) continue;

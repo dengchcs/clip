@@ -1,8 +1,7 @@
 #include "polygon.h"
 
-#include <stack>
 #include <unordered_set>
-#include <map>
+#include <unordered_map>
 
 bool inside(const QPoint& point, const points_t& poly) {
     int cnt = 0;
@@ -214,7 +213,7 @@ std::vector<mixpts_t> weiler_atherton(polys_t& win, polys_t& src) {
     set_enter_flag(win, lisrc, liwin);
     link(lisrc, liwin);
 
-    std::map<std::size_t, std::size_t> start_src, start_win;    // 环在顶点表中起始/终止点的下标对应关系
+    std::unordered_map<std::size_t, std::size_t> start_src, start_win;    // 环在顶点表中起始/终止点的下标对应关系
     for (std::size_t i = 0; i < lisrc.size(); ) {
         const auto start = i;
         while(! lisrc[++i].same_as(lisrc[start]));
