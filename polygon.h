@@ -15,8 +15,6 @@ typedef struct {
     int vert;
 } index_t;
 
-constexpr index_t null_ind = {-1,-1};
-
 class IntrPoint : public QPoint {
 public:
     bool is_enter;
@@ -125,7 +123,6 @@ std::optional<QPoint> line_intr(const QPoint& p1, const QPoint& p2, const QPoint
  * @brief 求两个多边形的交点
  * @param src 主多边形
  * @param win 裁剪多边形
- * @return
  */
 intrs_t polys_interset(const polys_t& src, const polys_t& win);
 
@@ -134,7 +131,6 @@ intrs_t polys_interset(const polys_t& src, const polys_t& win);
  * @param polys 主/裁剪多边形
  * @param is_src 是否是主多边形
  * @param intrs 主多边形和裁剪多边形的交点列表
- * @return
  */
 mixpts_t intr_list(const polys_t& polys, bool is_src, const intrs_t& intrs);
 

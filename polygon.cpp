@@ -128,7 +128,6 @@ intrs_t polys_interset(const polys_t& src, const polys_t& win) {
                     if (! point.has_value()) continue;
                     const index_t next_src = {(int)i, (int)knext};
                     const index_t next_win = {(int)j, (int)mnext};
-                    // todo: 判断是否为入点
                     IntrPoint intr(point.value(), false, true, next_src, next_win);
                     result.push_back(intr);
                 }
@@ -148,6 +147,7 @@ mixpts_t intr_list(const polys_t& polys, bool is_src, const intrs_t& intrs) {
             const auto p1 = polys[i][j];
             MixPoint vert{p1, PointType::Vert, -1};
             result.push_back(vert);
+            // 将当前边上的所有交点按顺序加入列表中
             intrs_t online;
             for (auto&& p : intrs) {
                 bool on_src = is_src && p.next_src.loop == (int)i && p.next_src.vert == (int)jnext;
@@ -162,6 +162,7 @@ mixpts_t intr_list(const polys_t& polys, bool is_src, const intrs_t& intrs) {
                 result.push_back(p);
             }
         }
+        // 环起点要出现两次
         MixPoint vert{polys[i].front(), PointType::Vert, -1};
         result.push_back(vert);
     }
@@ -182,7 +183,7 @@ void set_enter_flag(const polys_t& win, mixpts_t& lisrc, mixpts_t& liwin) {
     for (std::size_t i = 0; i < liwin.size(); i++) {
         if (liwin[i].e_type == PointType::Vert) continue;
         for (std::size_t j = 0; j < lisrc.size(); j++) {
-            if (lisrc[j].x() == liwin[i].x() && lisrc[j].y() == liwin[i].y()) {
+            if (lisrc[j].same_as(liwin[i])) {
                 liwin[i].e_type = lisrc[j].e_type;
                 break;
             }
@@ -213,7 +214,8 @@ std::vector<mixpts_t> weiler_atherton(polys_t& win, polys_t& src) {
     set_enter_flag(win, lisrc, liwin);
     link(lisrc, liwin);
 
-    std::unordered_map<std::size_t, std::size_t> start_src, start_win;    // 环在顶点表中起始/终止点的下标对应关系
+    // 环在顶点表中起始/终止点的下标对应关系
+    std::unordered_map<std::size_t, std::size_t> start_src, start_win;
     for (std::size_t i = 0; i < lisrc.size(); ) {
         const auto start = i;
         while(! lisrc[++i].same_as(lisrc[start]));
@@ -226,12 +228,15 @@ std::vector<mixpts_t> weiler_atherton(polys_t& win, polys_t& src) {
         start_win.insert({i, start});
         i++;
     }
+
+    // 所有未处理交点在主多边形表中的下标
     std::unordered_set<std::size_t> unvisitied_src;
     for (std::size_t i = 0; i < lisrc.size(); i++) {
         if (lisrc[i].e_type != PointType::Vert) {
             unvisitied_src.insert(i);
         }
     }
+
     std::vector<mixpts_t> result;
     while(! unvisitied_src.empty()) {
         // 选取一个未处理的交点作为起点
@@ -255,6 +260,7 @@ std::vector<mixpts_t> weiler_atherton(polys_t& win, polys_t& src) {
             // 跟踪到顶点直接加入, 直至跟踪到又一个交点
             while (track[nextind].e_type == PointType::Vert) {
                 poly.push_back(track[nextind]);
+                // 追踪到环的终点, 返回到起点继续追踪
                 if (cur_src && start_src.find(nextind) != start_src.end()) {
                     nextind = start_src.find(nextind)->second;
                 } else if (!cur_src && start_win.find(nextind) != start_win.end()) {

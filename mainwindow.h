@@ -16,7 +16,7 @@ enum class PolyType {
 };
 
 constexpr auto src_color = Qt::red;
-constexpr auto win_color = Qt::green;
+constexpr auto win_color = Qt::darkGreen;
 constexpr auto int_color = Qt::black;
 
 class MainWindow : public QMainWindow

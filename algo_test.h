@@ -8,10 +8,6 @@ class AlgoTest : public QObject
 {
     Q_OBJECT
 private slots:
-    void demoTest() {
-        QVERIFY(true);
-        qDebug() << "demo test\n";
-    }
 
     void testInside() {
         points_t poly = {{0, 0}, {0, 2}, {2, 2}, {1, 0}};

@@ -31,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
         if (buf_points.empty()) {
             intrpoly = weiler_atherton(window, source);
             update();
-            msg->setText("已绘制裁剪多边形");
+            msg->setText("已绘制裁剪结果");
         } else {
             msg->setText("请先闭合多边形");
         }
@@ -48,7 +48,6 @@ MainWindow::MainWindow(QWidget *parent)
     setFixedSize(800, 800);
     e_poly = PolyType::Window;
     setWindowTitle("左键添加点; 右键闭合环");
-    ui->colorText->setText("主多边形: 红色; 裁剪多边形: 绿色; 结果: 黑色");
 }
 
 MainWindow::~MainWindow()
@@ -88,15 +87,27 @@ void MainWindow::paintEvent(QPaintEvent*) {
         pen.setWidth(width);
         painter.setPen(pen);
     };
+
+    // 绘制三种多边形的颜色图示
+    auto draw_legend = [&](int startx, const char *name) {
+        painter.drawLine(QPoint{startx, 30}, {startx + 20, 30});
+        painter.drawText(QPoint{startx + 25, 35}, name);
+    };
+    set_painter(src_color, 4);
+    draw_legend(400, "主多边形");
+    set_painter(win_color, 4);
+    draw_legend(500, "裁剪多边形");
+    set_painter(int_color, 4);
+    draw_legend(600, "裁剪结果");
+
+    // 画一个环, 可以选择是否闭合
     auto draw_poly = [&](const points_t& points, bool close) {
         for (auto &&p : points) {
-            QRect rect(p.x(), p.y(), 100, 20);
-            painter.drawText(rect, "(" + QString::number(p.x()) + "," + QString::number(p.y()) + ")");
+            painter.drawText(p, "(" + QString::number(p.x()) + "," + QString::number(p.y()) + ")");
         }
         const auto npoints = points.size();
         if (npoints > 0) {
-            QRect rect(points.front().x() - 20, points.front().y(), 100, 20);
-            painter.drawText(rect, "起点");
+            painter.drawText(points.front() - QPoint{30, 0}, "起点");
         }
         for (std::size_t i = 0; i + 1 < npoints; i++) {
             painter.drawLine(points[i], points[i+1]);
@@ -116,6 +127,7 @@ void MainWindow::paintEvent(QPaintEvent*) {
     set_painter(e_poly == PolyType::Source ? src_color : win_color);
     draw_poly(buf_points, false);
 
+    // 绘制裁剪结果
     set_painter(int_color, 4);
     for (auto &&poly : intrpoly) {
         for (std::size_t i = 0; i < poly.size(); i++) {
@@ -126,8 +138,7 @@ void MainWindow::paintEvent(QPaintEvent*) {
     for (auto &&poly : intrpoly) {
         for (auto &&p : poly) {
             if (p.e_type == PointType::Vert) continue;
-            QRect rect(p.x(), p.y(), 100, 20);
-            painter.drawText(rect, p.e_type == PointType::In ? "IN" : "OUT");
+            painter.drawText(p, p.e_type == PointType::In ? "IN" : "OUT");
         }
     }
 }
