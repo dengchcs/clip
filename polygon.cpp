@@ -128,7 +128,7 @@ intrs_t polys_interset(const polys_t& src, const polys_t& win) {
                     if (! point.has_value()) continue;
                     const index_t next_src = {(int)i, (int)knext};
                     const index_t next_win = {(int)j, (int)mnext};
-                    IntrPoint intr(point.value(), false, true, next_src, next_win);
+                    IntrPoint intr(point.value(), next_src, next_win);
                     result.push_back(intr);
                 }
             }

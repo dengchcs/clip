@@ -17,12 +17,8 @@ typedef struct {
 
 class IntrPoint : public QPoint {
 public:
-    bool is_enter;
-    bool is_intr{false};
     index_t next_src, next_win;
-    IntrPoint(const QPoint& p, bool enter, bool intr, index_t nsrc, index_t nwin) : QPoint(p) {
-        is_enter = enter;
-        is_intr = intr;
+    IntrPoint(const QPoint& p, index_t nsrc, index_t nwin) : QPoint(p) {
         next_src = nsrc;
         next_win = nwin;
     }

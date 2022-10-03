@@ -43,10 +43,11 @@ MainWindow::MainWindow(QWidget *parent)
         window.clear();
         buf_points.clear();
         intrpoly.clear();
+        e_poly = type_default;
         update();
     });
     setFixedSize(800, 800);
-    e_poly = PolyType::Window;
+    e_poly = type_default;
     setWindowTitle("左键添加点; 右键闭合环");
 }
 
