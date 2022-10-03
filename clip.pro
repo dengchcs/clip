@@ -10,17 +10,17 @@ CONFIG += testcase
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    main.cpp \
-    mainwindow.cpp \
-    polygon.cpp
+    src/main.cpp \
+    src/mainwindow.cpp \
+    src/polygon.cpp
 
 HEADERS += \
-    algo_test.h \
-    mainwindow.h \
-    polygon.h
+    src/algo_test.h \
+    src/mainwindow.h \
+    src/polygon.h
 
 FORMS += \
-    mainwindow.ui
+    src/mainwindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
